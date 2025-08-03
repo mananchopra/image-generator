@@ -1,77 +1,199 @@
+# 🎨 AI Image Generator API
 
-Image Generation API with Vertex AI and Flask
-This repository provides a simple Flask-based API for generating images using Google Vertex AI's Image Generation Model. The service accepts POST requests with a news description and event ID, generates an image from the prompt using Vertex AI, and serves the generated images.
+> A powerful Flask-based REST API for generating high-quality images using Google Vertex AI's Imagen-3.0 model.
 
-Features
-REST API endpoint for on-demand image generation.
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
+[![Vertex AI](https://img.shields.io/badge/Vertex%20AI-Imagen%203.0-orange.svg)](https://cloud.google.com/vertex-ai)
 
-Integrates with Google Vertex AI's Imagen-3.0 Model for high-quality image synthesis.
+## ✨ Features
 
-Auto-saves images to a local directory; identical prompts with the same event ID are served from cache.
+- 🚀 **RESTful API** - Simple HTTP endpoints for on-demand image generation
+- 🎯 **High-Quality Images** - Powered by Google Vertex AI's Imagen-3.0 model
+- 💾 **Smart Caching** - Automatic image caching to avoid regeneration
+- 🔒 **Safety Filters** - Configurable content safety controls
+- ⚙️ **Customizable** - Adjustable image properties and generation parameters
+- 📁 **Local Storage** - Images saved to local directory for easy access
 
-Supports safety filters and configurable image properties.
+## 🏗️ Architecture
 
-Getting Started
-Prerequisites
-Python 3.8 or newer
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Client App    │───▶│  Flask API      │───▶│  Vertex AI      │
+│                 │    │  (Port 5012)    │    │  Imagen-3.0     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                              │
+                              ▼
+                       ┌─────────────────┐
+                       │ generated_images│
+                       │ Directory       │
+                       └─────────────────┘
+```
 
-Google Cloud account with Vertex AI permissions
+## 🚀 Quick Start
 
-Vertex AI Python SDK (vertex-ai), Flask
+### Prerequisites
 
-Install dependencies
-bash
-pip install flask vertex-ai
-Configuration
-Update your GCP Project ID in the script:
+- **Python 3.8+** - [Download Python](https://www.python.org/downloads/)
+- **Google Cloud Account** - [Sign up for GCP](https://cloud.google.com/)
+- **Vertex AI Permissions** - Enable Vertex AI API in your GCP project
 
-python
-PROJECT_ID = "your project id"
-If needed, adjust the LOCATION variable (default: "us-central1").
+### Installation
 
-Usage
-Run the server
-bash
-python app.py
-The server will start on http://0.0.0.0:5012.
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd image-generator
+   ```
 
-API Endpoint
-POST /generate_image
+2. **Install dependencies**
+   ```bash
+   pip install flask vertex-ai
+   ```
 
-Request body (JSON):
-newsDescription: Description or prompt for the image (string).
+3. **Configure your project**
+   ```python
+   # Edit image-generator.py
+   PROJECT_ID = "your-gcp-project-id"
+   LOCATION = "us-central1"  # Optional: change region if needed
+   ```
 
-newsEventId: Unique event ID to identify and cache the generated image (string).
+4. **Set up authentication**
+   ```bash
+   # Option 1: Use service account key
+   export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account-key.json"
+   
+   # Option 2: Use gcloud CLI
+   gcloud auth application-default login
+   ```
 
-Example:
+5. **Run the server**
+   ```bash
+   python image-generator.py
+   ```
 
-json
+   The API will be available at `http://localhost:5012`
+
+## 📡 API Reference
+
+### Generate Image
+
+**Endpoint:** `POST /generate_image`
+
+**Request Body:**
+```json
 {
-  "newsDescription": "A futuristic city skyline at sunset",
-  "newsEventId": "event12345"
+  "newsDescription": "A futuristic city skyline at sunset with flying cars",
+  "newsEventId": "event_2024_001"
 }
-Response
-Returns the generated image as a PNG file.
+```
 
-Directory Structure
-generated_images/: Stores all generated images, using the event ID as filename.
+**Response:**
+- **Success:** Returns the generated image as a PNG file
+- **Error:** JSON error message with appropriate HTTP status code
 
-Customization
-Change number_of_images or aspect_ratio in generate_image() for different image generation needs.
+**Example Usage:**
+```bash
+curl -X POST http://localhost:5012/generate_image \
+  -H "Content-Type: application/json" \
+  -d '{
+    "newsDescription": "A serene mountain landscape with snow-capped peaks",
+    "newsEventId": "mountain_scene_001"
+  }' \
+  --output generated_image.png
+```
 
-Adjust safety levels via safety_filter_level.
+## ⚙️ Configuration
 
-Notes
-Vertex AI Credentials: Ensure your environment is authenticated with GCP and you have appropriate permissions to use Vertex AI.
+### Image Generation Parameters
 
-Caching: If an image for a given event ID already exists, the API serves it directly instead of regenerating.
+You can customize the image generation by modifying these parameters in `image-generator.py`:
 
-License
-MIT License. See LICENSE for details.
+```python
+def generate_image(prompt):
+    model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
+    images = model.generate_images(
+        prompt=prompt,
+        number_of_images=1,           # Generate multiple images
+        aspect_ratio="1:1",          # Options: "1:1", "16:9", "9:16"
+        safety_filter_level="block_some"  # Options: "block_some", "block_few"
+    )
+    return images[0]
+```
 
-Acknowledgements
-Google Vertex AI
+### Available Options
 
-Flask
+| Parameter | Options | Description |
+|-----------|---------|-------------|
+| `aspect_ratio` | `"1:1"`, `"16:9"`, `"9:16"` | Image aspect ratio |
+| `safety_filter_level` | `"block_some"`, `"block_few"` | Content safety level |
+| `number_of_images` | `1-4` | Number of images to generate |
 
-Feel free to fork and adapt this project for your custom image generation workflows!
+## 📁 Project Structure
+
+```
+image-generator/
+├── image-generator.py      # Main Flask application
+├── README.md              # This file
+├── generated_images/       # Generated image storage
+│   ├── event_001.png
+│   ├── event_002.png
+│   └── ...
+└── requirements.txt       # Python dependencies (optional)
+```
+
+## 🔧 Development
+
+### Local Development
+
+1. **Set up a virtual environment**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. **Install development dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run in debug mode**
+   ```bash
+   export FLASK_ENV=development
+   python image-generator.py
+   ```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to service account key | None |
+| `PROJECT_ID` | GCP Project ID | "your project id" |
+| `LOCATION` | Vertex AI region | "us-central1" |
+
+## 🛡️ Security Considerations
+
+- **Authentication**: Ensure proper GCP authentication is configured
+- **Input Validation**: The API validates required fields
+- **Rate Limiting**: Consider implementing rate limiting for production
+- **CORS**: Configure CORS headers if needed for web applications
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 🙏 Acknowledgments
+
+- **Google Vertex AI** - For providing the powerful Imagen-3.0 model
+- **Flask** - For the lightweight web framework
+- **Python Community** - For excellent documentation and support
+
+---
+
+**Made with ❤️ using Flask and Google Vertex AI**
+
+*Star this repository if you found it helpful!*
